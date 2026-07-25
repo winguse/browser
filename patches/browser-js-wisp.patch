@@ -1,0 +1,43 @@
+diff --git a/packages/chrome/src/proxy/wisp.ts b/packages/chrome/src/proxy/wisp.ts
+index deb78a4c..56d8a894 100644
+--- a/packages/chrome/src/proxy/wisp.ts
++++ b/packages/chrome/src/proxy/wisp.ts
+@@ -22,6 +22,9 @@ import {
+ let useEpoxy = true;
+ 
+ export async function setWispUrl(wispurl: string) {
++	if (!wispurl) {
++		wispurl = (location.protocol === "https:" ? "wss:" : "ws:") + "//" + location.host + "/wisp/";
++	}
+ 	wispUrl = wispurl;
+ 
+ 	const isLoopback = (host: string) =>
+diff --git a/packages/chrome/src/services/ProfileService.ts b/packages/chrome/src/services/ProfileService.ts
+index b1f3421e..a690d868 100644
+--- a/packages/chrome/src/services/ProfileService.ts
++++ b/packages/chrome/src/services/ProfileService.ts
+@@ -61,23 +61,7 @@ export class ProfileService extends Service {
+ 			);
+ 		} else {
+ 			this.globalhistory = [];
+-			this.bookmarks = [
+-				new BookmarkEntry({
+-					url: new URL("https://www.google.com"),
+-					title: "Google",
+-					favicon: "https://www.google.com/favicon.ico",
+-				}),
+-				new BookmarkEntry({
+-					url: new URL("https://www.youtube.com"),
+-					title: "YouTube",
+-					favicon: "https://www.youtube.com/favicon.ico",
+-				}),
+-				new BookmarkEntry({
+-					url: new URL("https://developer.puter.com"),
+-					title: "Puter Developers",
+-					favicon: "https://developer.puter.com/favicons/favicon-16x16.png",
+-				}),
+-			];
++			this.bookmarks = [];
+ 		}
+ 	}
+ 

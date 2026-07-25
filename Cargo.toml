@@ -1,0 +1,40 @@
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "epoxy-tls/wisp"
+]
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+module_name_repetitions = "allow"
+struct_excessive_bools = "allow"
+missing_fields_in_debug = "allow"
+case_sensitive_file_extension_comparisons = "allow"
+
+[package]
+name = "browser-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wisp-mux = { path = "epoxy-tls/wisp", features = ["tokio-websockets"] }
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["io-util", "net", "compat"] }
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+bytes = "1"
+anyhow = "1"
+mime_guess = "2"
+log = "0.4"
+env_logger = "0.11"
+futures-util = "0.3"
+tokio-websockets = { version = "0.12", features = ["server", "sha1_smol"] }
+sha1 = "0.10"
+base64 = "0.21"
+
+[patch.crates-io]
+h2 = { git = "https://github.com/r58Playz/h2-wasm" }
