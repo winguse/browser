@@ -1,0 +1,313 @@
+import { Gecko, FsProvider } from "gecko.js";
+import {
+  prepareChromeFs,
+  createInMemoryProfileProvider,
+  loadOptionalFonts,
+  ChromeAssetsProgress,
+} from "./chrome-fs";
+import "./styles.css";
+
+const canvas = document.getElementById("screen") as HTMLCanvasElement;
+const splashShell = document.getElementById("splash-shell") as HTMLElement;
+const splashCard = document.getElementById("stage-card") as HTMLElement;
+const progressFill = document.getElementById("progress-fill") as HTMLElement;
+const progressPhase = document.getElementById("progress-phase") as HTMLElement;
+const progressPercent = document.getElementById("progress-percent") as HTMLElement;
+const splashStatus = document.getElementById("splash-status") as HTMLElement;
+const consoleOutput = document.getElementById("console-output") as HTMLElement;
+
+type UiPhase = "loading" | "ready" | "console";
+
+function setUiPhase(phase: UiPhase): void {
+  splashShell.setAttribute("data-phase", phase);
+  splashCard.setAttribute("data-phase", phase);
+}
+
+function appendConsoleLine(message: string, level: "log" | "warn" | "error" = "log"): void {
+  const line = document.createElement("div");
+  line.className = `console-line ${level}`;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  consoleOutput.appendChild(line);
+  consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+function setProgress(progress: ChromeAssetsProgress): void {
+  const pct = Math.min(100, Math.max(0, Math.round((progress.percent ?? 0) * 100)));
+  progressFill.style.width = `${pct}%`;
+  progressPercent.textContent = `${pct}%`;
+
+  const phaseLabels: Record<string, string> = {
+    downloading: "Downloading assets",
+    decompressing: "Unpacking Gecko environment",
+    ready: "Initializing Gecko runtime",
+  };
+  progressPhase.textContent = phaseLabels[progress.phase] ?? "Preparing";
+  splashStatus.textContent = progress.message;
+  appendConsoleLine(`${progressPhase.textContent}: ${progress.message}`);
+}
+
+window.addEventListener("error", (ev) => {
+  appendConsoleLine(`Uncaught ${ev.message}`, "error");
+});
+
+window.addEventListener("unhandledrejection", (ev) => {
+  const reason = ev.reason instanceof Error ? ev.reason.message : String(ev.reason);
+  appendConsoleLine(`Unhandled Rejection: ${reason}`, "error");
+});
+
+function syncCanvasSize(): void {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+syncCanvasSize();
+window.addEventListener("resize", syncCanvasSize);
+
+const BROWSER_CHROME_URL = "chrome://browser/content/browser.xhtml";
+
+const defaultWispProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+const defaultWisp = `${defaultWispProtocol}//${location.host}/wisp/`;
+
+const LS_KEY = "firefox-demo-opts";
+interface Opts {
+  gpu: boolean;
+  jit: boolean;
+  emoji: boolean;
+  cjk: boolean;
+  wisp: string;
+}
+const saved: Partial<Opts> = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+const opts: Opts = {
+  gpu: saved.gpu ?? true,
+  jit: saved.jit ?? false,
+  emoji: saved.emoji ?? false,
+  cjk: saved.cjk ?? false,
+  wisp: saved.wisp || defaultWisp,
+};
+
+const gpuToggle = document.getElementById("opt-gpu") as HTMLInputElement;
+const jitToggle = document.getElementById("opt-jit") as HTMLInputElement;
+const emojiToggle = document.getElementById("opt-emoji") as HTMLInputElement;
+const cjkToggle = document.getElementById("opt-cjk") as HTMLInputElement;
+const wispInput = document.getElementById("opt-wisp") as HTMLInputElement;
+
+gpuToggle.checked = opts.gpu;
+jitToggle.checked = opts.jit;
+emojiToggle.checked = opts.emoji;
+cjkToggle.checked = opts.cjk;
+wispInput.value = opts.wisp;
+
+function collectOpts(): Opts {
+  const next: Opts = {
+    gpu: gpuToggle.checked,
+    jit: jitToggle.checked,
+    emoji: emojiToggle.checked,
+    cjk: cjkToggle.checked,
+    wisp: wispInput.value.trim() || defaultWisp,
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(next));
+  return next;
+}
+
+function buildEnv(o: Opts): Record<string, string> {
+  const optEnv: Record<string, string> = { GECKO_CHROME: "1" };
+  if (o.gpu) {
+    optEnv.GECKO_GPU = "1";
+    optEnv.GECKO_GL_PASSTHROUGH = "1";
+    optEnv.GECKO_WR_DIRECT = "1";
+    optEnv.GECKO_APZ = "1";
+  }
+  if (!o.jit) optEnv.GECKO_NOWASMJIT = "1";
+
+  for (const [k, v] of new URLSearchParams(location.search)) {
+    if (k.startsWith("env.")) optEnv[k.slice(4)] = v;
+  }
+  return optEnv;
+}
+
+const startBtn = document.getElementById("start-btn") as HTMLButtonElement;
+
+const hasJspi =
+  typeof (WebAssembly as { Suspending?: unknown }).Suspending === "function" &&
+  typeof (WebAssembly as { promising?: unknown }).promising === "function";
+
+if (!hasJspi) {
+  const note = document.getElementById("jspi-note") as HTMLElement;
+  note.textContent =
+    "This browser doesn't support WebAssembly JSPI, which Firefox WASM needs to run.";
+  if (navigator.userAgent.includes("Firefox")) {
+    const hint = document.createElement("span");
+    hint.append(
+      " To enable it in Firefox: open ",
+      Object.assign(document.createElement("code"), {
+        textContent: "about:config",
+      }),
+      ", set ",
+      Object.assign(document.createElement("code"), {
+        textContent: "javascript.options.wasm_js_promise_integration",
+      }),
+      " to ",
+      Object.assign(document.createElement("code"), { textContent: "true" }),
+      ", then reload this page.",
+    );
+    note.append(hint);
+  }
+  note.hidden = false;
+}
+
+function fail(e: unknown): void {
+  console.error("[firefox-demo] startup failed", e);
+  setUiPhase("console");
+  startBtn.disabled = false;
+  startBtn.textContent = "Retry";
+  startBtn.onclick = () => location.reload();
+}
+
+startBtn.onclick = () => void start();
+startBtn.disabled = true;
+setUiPhase("loading");
+
+const dl = {
+  assets: { loaded: 0, total: 0 },
+  wasm: { loaded: 0, total: 0, done: false },
+};
+
+function renderDownloads(): void {
+  const loaded = dl.assets.loaded + dl.wasm.loaded;
+  const total =
+    dl.assets.total && dl.wasm.total
+      ? dl.assets.total + dl.wasm.total
+      : undefined;
+  setProgress({
+    phase: "downloading",
+    loaded,
+    total,
+    percent: total ? loaded / total : undefined,
+    message: "Downloading Firefox",
+  });
+}
+
+function assetsProgress(p: ChromeAssetsProgress): void {
+  if (p.phase === "downloading") {
+    dl.assets.loaded = p.loaded ?? dl.assets.loaded;
+    dl.assets.total = p.total ?? dl.assets.total;
+  } else {
+    if (dl.assets.total) dl.assets.loaded = dl.assets.total;
+    if (dl.wasm.done) {
+      setProgress(p);
+      return;
+    }
+  }
+  renderDownloads();
+}
+
+async function fetchWasmBlob(): Promise<string> {
+  const url = new URL(__GECKO_WASM__.url, location.href).href;
+  const r = await fetch(url);
+  if (!r.ok || !r.body)
+    throw new Error(`engine wasm fetch failed (${r.status}) for ${url}`);
+  dl.wasm.total = Number(r.headers.get("Content-Length")) || 0;
+  const reader = r.body.getReader();
+  const chunks: Uint8Array[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    dl.wasm.loaded += value.byteLength;
+    renderDownloads();
+  }
+  dl.wasm.done = true;
+  if (!dl.wasm.total) dl.wasm.total = dl.wasm.loaded;
+  renderDownloads();
+  return URL.createObjectURL(
+    new Blob(chunks as BlobPart[], { type: "application/wasm" }),
+  );
+}
+
+const chromeFsReady: Promise<FsProvider> = prepareChromeFs(assetsProgress);
+const wasmBlobReady: Promise<string> = fetchWasmBlob();
+
+Promise.all([chromeFsReady, wasmBlobReady])
+  .then(() => {
+    console.log("[firefox-demo] assets and engine ready");
+    setUiPhase("ready");
+    startBtn.disabled = !hasJspi;
+  })
+  .catch(fail);
+
+async function start(): Promise<void> {
+  setUiPhase("console");
+  startBtn.disabled = true;
+  gpuToggle.disabled = true;
+  jitToggle.disabled = true;
+  emojiToggle.disabled = true;
+  cjkToggle.disabled = true;
+  wispInput.disabled = true;
+  startBtn.textContent = "Starting…";
+
+  const chosen = collectOpts();
+  const optEnv = buildEnv(chosen);
+
+  if (chosen.emoji || chosen.cjk) {
+    setProgress({
+      phase: "decompressing",
+      percent: 1,
+      message: "Loading optional font assets",
+    });
+    await loadOptionalFonts(chosen.emoji, chosen.cjk);
+  }
+
+  const fsProvider = await prepareChromeFs(assetsProgress);
+
+  const gecko = new Gecko({
+    canvas,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    wasm: {
+      url: await wasmBlobReady,
+      compressed: __GECKO_WASM__.compressed,
+    },
+    env: optEnv,
+    fs: fsProvider,
+    profile: createInMemoryProfileProvider(),
+    wispUrl: chosen.wisp.trim() || undefined,
+    print: (s) => console.log("[gecko]", s),
+    printErr: (s) => console.warn("[gecko]", s),
+  });
+
+  try {
+    await gecko.init();
+    console.log("[firefox-demo] gecko.init done");
+    setProgress({
+      phase: "ready",
+      percent: 1,
+      message: "Loading browser chrome",
+    });
+    await gecko.load(BROWSER_CHROME_URL);
+    console.log("[firefox-demo] Firefox front-end booted");
+
+    try {
+      await gecko.evalChrome(`(() => {
+        const prefs = [
+          ['font.name-list.sans-serif.zh-CN', 'Noto Sans SC, PingFang SC, Microsoft YaHei, SimHei, STHeiti, Noto Sans CJK SC, Twemoji Mozilla, sans-serif'],
+          ['font.name-list.sans-serif.zh-TW', 'Noto Sans SC, PingFang TC, Microsoft JhengHei, STHeiti, Twemoji Mozilla, sans-serif'],
+          ['font.name-list.sans-serif.zh-HK', 'Noto Sans SC, PingFang HK, Microsoft JhengHei, Twemoji Mozilla, sans-serif'],
+          ['font.name-list.sans-serif.x-unicode', 'Noto Sans SC, PingFang SC, STHeiti, Hiragino Sans GB, Microsoft YaHei, Arial Unicode MS, Twemoji Mozilla, sans-serif'],
+          ['font.name-list.sans-serif.x-western', 'Liberation Sans, Twemoji Mozilla, sans-serif'],
+          ['font.name-list.serif.zh-CN', 'Noto Sans SC, Songti SC, SimSun, serif'],
+          ['font.name-list.emoji', 'Twemoji Mozilla, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji'],
+          ['font.name.sans-serif.zh-CN', 'Noto Sans SC'],
+          ['font.name.sans-serif.x-unicode', 'Noto Sans SC'],
+        ];
+        for (const [k, v] of prefs) {
+          try { Services.prefs.setCharPref(k, v); } catch(e) {}
+        }
+        return 'cjk-prefs-set';
+      })()`);
+    } catch(e) {}
+
+    canvas.classList.add("ready");
+    document.getElementById("splash")?.classList.add("done");
+  } catch (e) {
+    fail(e);
+  }
+}

@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
 		std::env::var("SANDBOX_DIR").unwrap_or_else(|_| "./browser.js/packages/sandbox".to_string()),
 	);
 	let firefox_dir = PathBuf::from(
-		std::env::var("FIREFOX_DIR").unwrap_or_else(|_| "./firefox-wasm/demo/chrome/dist".to_string()),
+		std::env::var("FIREFOX_DIR").unwrap_or_else(|_| "./dist/firefox".to_string()),
 	);
 
 	let state = Arc::new(AppState {

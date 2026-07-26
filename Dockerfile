@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 COPY --from=rust-builder /app/target/release/browser-server /app/browser-server
 COPY browser.js/packages/chrome/dist /app/dist/chrome
 COPY browser.js/packages/sandbox /app/dist/sandbox
-COPY firefox-wasm/demo/chrome/dist /app/dist/firefox
+COPY dist/firefox /app/dist/firefox
 
 ENV PORT=8080
 ENV HOST=0.0.0.0

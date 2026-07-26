@@ -12,6 +12,14 @@
 # Node & PNPM dependencies & build outputs
 node_modules/
 dist/
+/deps/
+/demo/dist/
+/demo/node_modules/
+/demo/public/chrome-assets*
+/demo/public/fonts/
+*.ttf
+*.ttc
+*.woff2
 .pnpm-store/
 .npm/
 
