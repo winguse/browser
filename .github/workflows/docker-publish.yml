@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-assets:
+  build-browser-assets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository with submodules
@@ -47,17 +47,95 @@ jobs:
           pnpm build
           pnpm build:chrome
 
-      - name: Upload frontend static assets artifact
+      - name: Upload browser.js static assets artifact
         uses: actions/upload-artifact@v7
         with:
-          name: static-assets
+          name: browser-assets
           path: |
             browser.js/packages/chrome/dist
             browser.js/packages/sandbox
           retention-days: 1
 
+  build-firefox-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9.12.0
+
+      - name: Install firefox-wasm build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang llvm-dev libpulse-dev python3 mercurial unzip zstd rsync \
+            wget lsb-release gnupg software-properties-common
+          LLVM_VER=21
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh ${LLVM_VER}
+          sudo apt-get install -y --no-install-recommends libclang-${LLVM_VER}-dev
+          echo "LIBCLANG_PATH=/usr/lib/llvm-${LLVM_VER}/lib" >> "$GITHUB_ENV"
+
+      - name: Set up Rust 1.95.0 (+ rust-src, wasm target)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.95.0'
+          components: rust-src
+          targets: wasm32-unknown-emscripten
+
+      - name: Free disk space & add swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+          SW=/swapfile
+          if ! swapon --show 2>/dev/null | grep -q .; then
+            ( sudo fallocate -l 24G "$SW" || sudo dd if=/dev/zero of="$SW" bs=1M count=24576 ) 2>/dev/null \
+              && sudo chmod 600 "$SW" && sudo mkswap "$SW" >/dev/null 2>&1 && sudo swapon "$SW" 2>/dev/null || true
+          fi
+
+      - name: Set up Emscripten 6.0.1
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+          "$HOME/emsdk/emsdk" install 6.0.1
+          "$HOME/emsdk/emsdk" activate 6.0.1
+          echo "EMSDK=$HOME/emsdk" >> "$GITHUB_ENV"
+          echo "$HOME/emsdk/upstream/emscripten" >> "$GITHUB_PATH"
+          echo "$HOME/emsdk" >> "$GITHUB_PATH"
+          export EMSDK="$HOME/emsdk"
+          node firefox-wasm/gecko.js/patch-emsdk-wasmfs.mjs "$HOME/emsdk/upstream/emscripten"
+          touch "$HOME/emsdk/.wisp-patched"
+
+      - name: Build firefox-wasm via submodule Makefile
+        run: |
+          cd firefox-wasm
+          git apply ../patches/firefox-wasm.patch
+          ulimit -s unlimited || ulimit -s 524288 || true
+          make libxul RELEASE=1
+          export GECKO_OBJDIR="${PWD}/obj-full-emscripten-release"
+          make chrome-assets
+          pnpm --filter chrome-demo build
+
+      - name: Upload firefox-wasm static assets artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firefox-assets
+          path: |
+            firefox-wasm/demo/chrome/dist
+          retention-days: 1
+
   build:
-    needs: build-assets
+    needs: [build-browser-assets, build-firefox-assets]
     strategy:
       fail-fast: false
       matrix:
@@ -79,11 +157,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Download pre-built frontend static assets
+      - name: Download pre-built browser.js static assets
         uses: actions/download-artifact@v8
         with:
-          name: static-assets
+          name: browser-assets
           path: browser.js/packages/
+
+      - name: Download pre-built firefox-wasm static assets
+        uses: actions/download-artifact@v8
+        with:
+          name: firefox-assets
+          path: firefox-wasm/demo/chrome/dist/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

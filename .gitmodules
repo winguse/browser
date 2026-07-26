@@ -5,3 +5,6 @@
 	path = epoxy-tls
 	url = https://github.com/MercuryWorkshop/epoxy-tls
 	branch = multiplexed
+[submodule "firefox-wasm"]
+	path = firefox-wasm
+	url = https://github.com/HeyPuter/firefox-wasm.git

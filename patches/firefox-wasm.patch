@@ -1,0 +1,117 @@
+diff --git a/demo/chrome/src/chrome-fs.ts b/demo/chrome/src/chrome-fs.ts
+index 2fc2805..df16e0a 100644
+--- a/demo/chrome/src/chrome-fs.ts
++++ b/demo/chrome/src/chrome-fs.ts
+@@ -29,6 +29,74 @@ const ARCHIVE_URL = new URL('chrome-assets.tar.zst', location.href).href;
+ const MANIFEST_URL = new URL('chrome-assets.json', location.href).href;
+ // OPFS path for the persistent profile (gecko.js `profile` option).
+ export const PROFILE_OPFS_PATH = 'profile';
++
++/**
++ * Wait for OPFS profile file locks from previous page sessions to be released by the browser.
++ * On fast reloads in Chrome, previous web workers may take 50-300ms to terminate and release
++ * their FileSystemSyncAccessHandle locks on OPFS profile files.
++ * If locks cannot be released after timeout (e.g. corrupted OPFS handle state), clean up the profile.
++ */
++export async function waitForOpfsLocks(dirName: string = PROFILE_OPFS_PATH, timeoutMs: number = 3000): Promise<void> {
++  if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.getDirectory) return;
++  try {
++    const root = await navigator.storage.getDirectory();
++    let dir: FileSystemDirectoryHandle;
++    try {
++      dir = await root.getDirectoryHandle(dirName, { create: false });
++    } catch {
++      return; // Directory doesn't exist yet, no locks to wait for
++    }
++
++    const startTime = Date.now();
++
++    while (Date.now() - startTime < timeoutMs) {
++      let locked = false;
++      try {
++        const entries: Array<[string, FileSystemHandle]> = [];
++        // @ts-ignore - entries() exists on FileSystemDirectoryHandle in modern browsers
++        for await (const entry of dir.entries()) {
++          entries.push(entry);
++        }
++        for (const [, handle] of entries) {
++          if (handle.kind === 'file') {
++            try {
++              const fileHandle = handle as FileSystemFileHandle;
++              if ('createSyncAccessHandle' in fileHandle) {
++                // @ts-ignore
++                const accessHandle = await fileHandle.createSyncAccessHandle();
++                accessHandle.close();
++              }
++            } catch (err: any) {
++              if (err?.name === 'InvalidStateError' || err?.name === 'NoModificationAllowedError') {
++                locked = true;
++                break;
++              }
++            }
++          }
++        }
++      } catch (err: any) {
++        if (err?.name === 'InvalidStateError' || err?.name === 'NoModificationAllowedError') {
++          locked = true;
++        }
++      }
++
++      if (!locked) {
++        return; // All locks released!
++      }
++      await new Promise((resolve) => setTimeout(resolve, 50));
++    }
++
++    console.warn(`[opfs] Profile locks in '${dirName}' held after ${timeoutMs}ms; resetting corrupted OPFS profile directory.`);
++    try {
++      await root.removeEntry(dirName, { recursive: true });
++    } catch (e) {
++      console.error(`[opfs] Failed to remove corrupted OPFS directory '${dirName}':`, e);
++    }
++  } catch {
++    // Ignore environments where OPFS is restricted
++  }
++}
++
+ const REQUIRED_FILES = [
+   'fonts/LiberationSans-Regular.ttf',
+   'browser/fonts/LiberationSans-Regular.ttf',
+@@ -50,7 +118,7 @@ async function yieldToBrowser(): Promise<void> {
+ }
+ 
+ async function fetchJson<T>(url: string): Promise<T> {
+-  const r = await fetch(url, { cache: 'no-store' });
++  const r = await fetch(url);
+   if (!r.ok) throw new Error(`chrome-fs: ${url} -> HTTP ${r.status}`);
+   return await r.json() as T;
+ }
+@@ -66,7 +134,7 @@ function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {
+ }
+ 
+ async function fetchBytes(url: string, progress?: ProgressCallback): Promise<Uint8Array> {
+-  const r = await fetch(url, { cache: 'no-store' });
++  const r = await fetch(url);
+   if (!r.ok) throw new Error(`chrome-fs: ${url} -> HTTP ${r.status}`);
+   const total = Number(r.headers.get('Content-Length')) || undefined;
+   if (!r.body) {
+diff --git a/demo/chrome/src/main.ts b/demo/chrome/src/main.ts
+index 469a3f9..bbef689 100644
+--- a/demo/chrome/src/main.ts
++++ b/demo/chrome/src/main.ts
+@@ -3,6 +3,7 @@ import "./styles.css";
+ import {
+   prepareChromeFs,
+   PROFILE_OPFS_PATH,
++  waitForOpfsLocks,
+   type ChromeAssetsProgress,
+ } from "./chrome-fs";
+ 
+@@ -390,6 +391,7 @@ async function start(): Promise<void> {
+   });
+ 
+   try {
++    await waitForOpfsLocks(PROFILE_OPFS_PATH);
+     await gecko.init();
+     console.log("init done");
+     setProgress({
