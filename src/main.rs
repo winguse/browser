@@ -59,6 +59,7 @@ fn add_cors_headers<T>(mut resp: Response<T>) -> Response<T> {
 struct AppState {
 	static_dir: PathBuf,
 	sandbox_dir: PathBuf,
+	scramjet_dir: PathBuf,
 }
 
 #[tokio::main]
@@ -77,10 +78,14 @@ async fn main() -> anyhow::Result<()> {
 	let sandbox_dir = PathBuf::from(
 		std::env::var("SANDBOX_DIR").unwrap_or_else(|_| "./browser.js/packages/sandbox".to_string()),
 	);
+	let scramjet_dir = PathBuf::from(
+		std::env::var("SCRAMJET_DIR").unwrap_or_else(|_| "./browser.js/packages/scramjet/packages/core/dist".to_string()),
+	);
 
 	let state = Arc::new(AppState {
 		static_dir,
 		sandbox_dir,
+		scramjet_dir,
 	});
 
 	let addr = format!("{}:{}", host, port);
@@ -247,6 +252,8 @@ async fn serve_static_file(req: &Request<Incoming>, state: &AppState) -> Respons
 		(&state.sandbox_dir, stripped)
 	} else if raw_path == "/sandbox" || raw_path == "/sandbox/" {
 		(&state.sandbox_dir, "controller.html")
+	} else if let Some(stripped) = raw_path.strip_prefix("/scramjet/") {
+		(&state.scramjet_dir, stripped)
 	} else if raw_path == "/controller.html" || raw_path == "/controller.sw.js" || raw_path == "/sw.js" {
 		(&state.sandbox_dir, raw_path.trim_start_matches('/'))
 	} else {

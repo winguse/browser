@@ -54,6 +54,7 @@ jobs:
           path: |
             browser.js/packages/chrome/dist
             browser.js/packages/sandbox
+            browser.js/packages/scramjet/packages/core/dist
           retention-days: 1
 
   build:
