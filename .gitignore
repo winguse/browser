@@ -13,10 +13,10 @@
 node_modules/
 dist/
 /deps/
-/demo/dist/
-/demo/node_modules/
-/demo/public/chrome-assets*
-/demo/public/fonts/
+/firefox-landing-page/dist/
+/firefox-landing-page/node_modules/
+/firefox-landing-page/public/chrome-assets*
+/firefox-landing-page/public/fonts/
 *.ttf
 *.ttc
 *.woff2

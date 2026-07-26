@@ -67,7 +67,7 @@ const BROWSER_CHROME_URL = "chrome://browser/content/browser.xhtml";
 const defaultWispProtocol = location.protocol === "https:" ? "wss:" : "ws:";
 const defaultWisp = `${defaultWispProtocol}//${location.host}/wisp/`;
 
-const LS_KEY = "firefox-demo-opts";
+const LS_KEY = "firefox-landing-page-opts";
 interface Opts {
   gpu: boolean;
   jit: boolean;
@@ -155,7 +155,7 @@ if (!hasJspi) {
 }
 
 function fail(e: unknown): void {
-  console.error("[firefox-demo] startup failed", e);
+  console.error("[firefox-landing-page] startup failed", e);
   setUiPhase("console");
   startBtn.disabled = false;
   startBtn.textContent = "Retry";
@@ -228,7 +228,7 @@ const wasmBlobReady: Promise<string> = fetchWasmBlob();
 
 Promise.all([chromeFsReady, wasmBlobReady])
   .then(() => {
-    console.log("[firefox-demo] assets and engine ready");
+    console.log("[firefox-landing-page] assets and engine ready");
     setUiPhase("ready");
     startBtn.disabled = !hasJspi;
   })
@@ -276,14 +276,14 @@ async function start(): Promise<void> {
 
   try {
     await gecko.init();
-    console.log("[firefox-demo] gecko.init done");
+    console.log("[firefox-landing-page] gecko.init done");
     setProgress({
       phase: "ready",
       percent: 1,
       message: "Loading browser chrome",
     });
     await gecko.load(BROWSER_CHROME_URL);
-    console.log("[firefox-demo] Firefox front-end booted");
+    console.log("[firefox-landing-page] Firefox front-end booted");
 
     try {
       await gecko.evalChrome(`(() => {

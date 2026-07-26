@@ -10,7 +10,7 @@ A high-performance Rust web server that serves [HeyPuter/browser.js](https://git
 ```bash
 make dev
 ```
-This automatically downloads upstream `firefox-wasm` release assets (`v0.0.1`), builds the frontend demo (`demo/`), compiles the Rust server, and launches the server at `http://localhost:8080`.
+This automatically downloads upstream `firefox-wasm` release assets (`v0.0.1`), builds the frontend landing page (`firefox-landing-page/`), compiles the Rust server, and launches the server at `http://localhost:8080`.
 
 ### Run container:
 ```bash

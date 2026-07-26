@@ -26,7 +26,7 @@ This repository automates the build and publishing of multi-architecture Docker 
 │       └── docker-publish.yml # Parallel multi-arch GitHub Actions workflow (v*)
 ├── browser.js/                 # Git Submodule: HeyPuter/browser.js
 ├── epoxy-tls/                 # Git Submodule: MercuryWorkshop/epoxy-tls (branch: multiplexed)
-├── demo/                      # Standalone Firefox WASM demo UI (Vite + TS)
+├── firefox-landing-page/       # Standalone Firefox WASM landing page UI (Vite + TS)
 ├── src/
 │   └── main.rs                # Rust HTTP & Wisp WebSocket server
 ├── Makefile                   # Build automation & dev runner (make dev)
@@ -39,9 +39,9 @@ This repository automates the build and publishing of multi-architecture Docker 
 
 ---
 
-## 3. Firefox WASM Demo Features & Options
+## 3. Firefox WASM Landing Page Features & Options
 
-The custom frontend in `demo/` provides:
+The custom frontend in `firefox-landing-page/` provides:
 1. **Launch Button**: User-initiated click to boot Gecko WASM and open the Firefox chrome interface.
 2. **GPU Acceleration**: WebGL-based hardware rendering toggle (enabled by default).
 3. **JIT Option**: Experimental WebAssembly JIT toggle (unselected by default).
@@ -55,13 +55,13 @@ The custom frontend in `demo/` provides:
 
 ### Download Dependencies & Run Dev Server:
 ```bash
-# Downloads upstream release tarballs, builds frontend demo into dist/firefox, and runs Rust server
+# Downloads upstream release tarballs, builds frontend landing page into dist/firefox, and runs Rust server
 make dev
 ```
 
-### Build Demo Frontend Only:
+### Build Landing Page Frontend Only:
 ```bash
-make build-demo
+make build-firefox-landing-page
 ```
 
 ### Build Rust Server Binary:

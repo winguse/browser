@@ -74,9 +74,9 @@ jobs:
         with:
           version: 9
 
-      - name: Build firefox demo static assets
+      - name: Build firefox landing page static assets
         run: |
-          make build-demo
+          make build-firefox-landing-page
 
       - name: Upload firefox static assets artifact
         uses: actions/upload-artifact@v7
