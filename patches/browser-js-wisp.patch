@@ -1,3 +1,15 @@
+diff --git a/packages/chrome/src/proxy/scramjet.ts b/packages/chrome/src/proxy/scramjet.ts
+index 26041174..a2e44399 100644
+--- a/packages/chrome/src/proxy/scramjet.ts
++++ b/packages/chrome/src/proxy/scramjet.ts
+@@ -393,6 +393,7 @@ export function createFetchHandler(controller: Controller) {
+ 	};
+ 
+ 	const fetchHandler = new ScramjetFetchHandler({
++		crossOriginIsolated: true,
+ 		transport: transport,
+ 		context: {
+ 			interface: {
 diff --git a/packages/chrome/src/proxy/wisp.ts b/packages/chrome/src/proxy/wisp.ts
 index deb78a4c..56d8a894 100644
 --- a/packages/chrome/src/proxy/wisp.ts

@@ -12,6 +12,14 @@
 # Node & PNPM dependencies & build outputs
 node_modules/
 dist/
+/deps/
+/firefox-landing-page/dist/
+/firefox-landing-page/node_modules/
+/firefox-landing-page/public/chrome-assets*
+/firefox-landing-page/public/fonts/
+*.ttf
+*.ttc
+*.woff2
 .pnpm-store/
 .npm/
 

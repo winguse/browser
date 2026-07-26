@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-assets:
+  build-browser-assets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository with submodules
@@ -47,17 +47,46 @@ jobs:
           pnpm build
           pnpm build:chrome
 
-      - name: Upload frontend static assets artifact
+      - name: Upload browser.js static assets artifact
         uses: actions/upload-artifact@v7
         with:
-          name: static-assets
+          name: browser-assets
           path: |
             browser.js/packages/chrome/dist
             browser.js/packages/sandbox
           retention-days: 1
 
+  build-firefox-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - name: Build firefox landing page static assets
+        run: |
+          make build-firefox-landing-page
+
+      - name: Upload firefox static assets artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: firefox-assets
+          path: dist/firefox
+          retention-days: 1
+
   build:
-    needs: build-assets
+    needs: [build-browser-assets, build-firefox-assets]
     strategy:
       fail-fast: false
       matrix:
@@ -79,11 +108,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Download pre-built frontend static assets
+      - name: Download pre-built browser.js static assets
         uses: actions/download-artifact@v8
         with:
-          name: static-assets
+          name: browser-assets
           path: browser.js/packages/
+
+      - name: Download pre-built firefox static assets
+        uses: actions/download-artifact@v8
+        with:
+          name: firefox-assets
+          path: dist/firefox/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

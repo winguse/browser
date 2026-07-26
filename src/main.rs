@@ -53,12 +53,25 @@ fn add_cors_headers<T>(mut resp: Response<T>) -> Response<T> {
 		hyper::header::HeaderName::from_static("cross-origin-resource-policy"),
 		hyper::header::HeaderValue::from_static("cross-origin"),
 	);
+	headers.insert(
+		hyper::header::HeaderName::from_static("cross-origin-opener-policy"),
+		hyper::header::HeaderValue::from_static("same-origin"),
+	);
+	headers.insert(
+		hyper::header::HeaderName::from_static("cross-origin-embedder-policy"),
+		hyper::header::HeaderValue::from_static("require-corp"),
+	);
+	headers.insert(
+		hyper::header::CONTENT_SECURITY_POLICY,
+		hyper::header::HeaderValue::from_static("default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss:;"),
+	);
 	resp
 }
 
 struct AppState {
 	static_dir: PathBuf,
 	sandbox_dir: PathBuf,
+	firefox_dir: PathBuf,
 }
 
 #[tokio::main]
@@ -77,10 +90,14 @@ async fn main() -> anyhow::Result<()> {
 	let sandbox_dir = PathBuf::from(
 		std::env::var("SANDBOX_DIR").unwrap_or_else(|_| "./browser.js/packages/sandbox".to_string()),
 	);
+	let firefox_dir = PathBuf::from(
+		std::env::var("FIREFOX_DIR").unwrap_or_else(|_| "./dist/firefox".to_string()),
+	);
 
 	let state = Arc::new(AppState {
 		static_dir,
 		sandbox_dir,
+		firefox_dir,
 	});
 
 	let addr = format!("{}:{}", host, port);
@@ -243,7 +260,23 @@ where
 async fn serve_static_file(req: &Request<Incoming>, state: &AppState) -> Response<ResponseBody> {
 	let raw_path = req.uri().path();
 
-	let (base_dir, relative_path) = if let Some(stripped) = raw_path.strip_prefix("/sandbox/") {
+	if raw_path == "/ff" {
+		let target = match req.uri().query() {
+			Some(q) => format!("/ff/?{}", q),
+			None => "/ff/".to_string(),
+		};
+		return Response::builder()
+			.status(StatusCode::MOVED_PERMANENTLY)
+			.header(hyper::header::LOCATION, target)
+			.body(empty_body())
+			.unwrap();
+	}
+
+	let (base_dir, relative_path) = if let Some(stripped) = raw_path.strip_prefix("/ff/") {
+		(&state.firefox_dir, stripped)
+	} else if raw_path == "/ff/" {
+		(&state.firefox_dir, "")
+	} else if let Some(stripped) = raw_path.strip_prefix("/sandbox/") {
 		(&state.sandbox_dir, stripped)
 	} else if raw_path == "/sandbox" || raw_path == "/sandbox/" {
 		(&state.sandbox_dir, "controller.html")
