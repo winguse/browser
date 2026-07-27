@@ -1,6 +1,6 @@
 # Browser (in browser)
 
-A high-performance Rust web server that serves [HeyPuter/browser.js](https://github.com/HeyPuter/browser.js) and Firefox WASM static assets while handling [epoxy-tls](https://github.com/MercuryWorkshop/epoxy-tls) Wisp WebSocket proxying over a single HTTP port (8080).
+A high-performance web server that serves [HeyPuter/browser.js](https://github.com/HeyPuter/browser.js) and Firefox WASM static assets while handling [wisp-js](https://github.com/MercuryWorkshop/wisp-js) Wisp WebSocket proxying over a single HTTP port (8080).
 
 ---
 
@@ -10,7 +10,7 @@ A high-performance Rust web server that serves [HeyPuter/browser.js](https://git
 ```bash
 make dev
 ```
-This automatically downloads upstream `firefox-wasm` release assets (`v0.0.1`), builds the frontend landing page (`firefox-landing-page/`), compiles the Rust server, and launches the server at `http://localhost:8080`.
+This automatically downloads upstream `firefox-wasm` release assets (`v0.0.1`), builds the frontend landing page (`firefox-landing-page/`), installs dependencies, and launches the server at `http://localhost:8080`.
 
 ### Run container:
 ```bash

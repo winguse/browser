@@ -49,16 +49,17 @@ build-firefox-landing-page: download-deps
 
 build-demo: build-firefox-landing-page
 
-# Build Rust server binary
+# Build Node.js server dependencies
 build-server:
-	@echo ">> Building Rust server..."
-	@cargo build --release
+	@echo ">> Installing server dependencies..."
+	@npm install --omit=dev
 
-# Development target: builds landing page assets and runs Rust server
+# Development target: builds landing page assets and runs Node.js server
 dev: build-firefox-landing-page
-	@echo ">> Starting Rust Browser & Wisp server on http://localhost:8080 ..."
-	FIREFOX_DIR=$(FIREFOX_DIST) cargo run --release
+	@npm install
+	@echo ">> Starting Browser & Wisp server on http://localhost:8080 ..."
+	FIREFOX_DIR=$(FIREFOX_DIST) node src/server.js
 
 clean:
-	@rm -rf $(DEPS_DIR) $(DIST_DIR) firefox-landing-page/dist firefox-landing-page/node_modules target /tmp/fw-deps
+	@rm -rf $(DEPS_DIR) $(DIST_DIR) firefox-landing-page/dist firefox-landing-page/node_modules node_modules /tmp/fw-deps
 
