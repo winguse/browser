@@ -88,14 +88,6 @@
                       </label>
 
                       <label class="option-card">
-                        <input type="checkbox" id="opt-jit" />
-                        <span class="option-copy">
-                          <strong>Enable JIT</strong>
-                          <span>Experimental JS → WASM JIT execution.</span>
-                        </span>
-                      </label>
-
-                      <label class="option-card">
                         <input type="checkbox" id="opt-emoji" />
                         <span class="option-copy">
                           <strong>Load Emoji Font</strong>
@@ -112,7 +104,7 @@
                       </label>
 
                       <label class="wisp-field">
-                        <span>Wisp Server</span>
+                        <span>Wisp Server <a href="#" id="how-it-works-link" style="color: var(--accent); text-decoration: none; font-size: 0.85em; margin-left: auto;">(How it Works)</a></span>
                         <input
                           type="text"
                           id="opt-wisp"
@@ -121,13 +113,26 @@
                           aria-label="Wisp server"
                         />
                       </label>
+
+                      <label class="option-card">
+                        <input type="checkbox" id="opt-jit" disabled />
+                        <span class="option-copy">
+                          <strong>Enable JIT (Experimental)</strong>
+                          <span>JS → WASM JIT execution. (Disabled)</span>
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
+      <div id="how-it-works-modal" class="modal" hidden>
+        <div class="modal-content">
+          <span id="close-modal" class="close">&times;</span>
           <div class="how-it-works-section">
             <h2 class="how-it-works-title">How it Works</h2>
             <pre class="mermaid">
@@ -158,7 +163,7 @@ sequenceDiagram
     W->>R: 2. TCP Handshake (Proxy forwards bytes)
 
     Note over G, R: End-to-End Encryption
-    G->>R: 3. TLS Handshake (Wisp only sees encrypted bytes)
+    G->>R: 3. TLS (https/wss) Handshake (Wisp only sees encrypted bytes)
     G->>R: 4. HTTP Request (Encrypted)
     R-->>G: HTTP Response (Encrypted)
 
@@ -174,9 +179,31 @@ sequenceDiagram
     <script>
       mermaid.initialize({ startOnLoad: false, theme: 'dark' });
       document.addEventListener("DOMContentLoaded", function () {
-        mermaid.run({
-          querySelector: '.mermaid',
-        });
+        const modal = document.getElementById("how-it-works-modal");
+        const link = document.getElementById("how-it-works-link");
+        const span = document.getElementById("close-modal");
+        let mermaidRendered = false;
+
+        link.onclick = function(e) {
+          e.preventDefault();
+          modal.hidden = false;
+          if (!mermaidRendered) {
+            mermaid.run({
+              querySelector: '.mermaid',
+            });
+            mermaidRendered = true;
+          }
+        }
+
+        span.onclick = function() {
+          modal.hidden = true;
+        }
+
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.hidden = true;
+          }
+        }
       });
     </script>
   </body>

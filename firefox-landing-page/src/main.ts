@@ -114,6 +114,35 @@ emojiToggle.checked = opts.emoji;
 cjkToggle.checked = opts.cjk;
 wispInput.value = opts.wisp;
 
+// Optional Fonts downloading functionality when selected
+const checkOptionalFonts = async () => {
+  if (emojiToggle.checked || cjkToggle.checked) {
+    startBtn.disabled = true;
+    startBtn.textContent = "Downloading Fonts…";
+    setUiPhase("loading");
+    setProgress({
+      phase: "downloading",
+      loaded: 0,
+      total: 0,
+      message: "Downloading optional font assets",
+    });
+    try {
+      await loadOptionalFonts(emojiToggle.checked, cjkToggle.checked, assetsProgress);
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Firefox";
+      setUiPhase("ready");
+    } catch (e) {
+      console.warn("Failed to load optional fonts:", e);
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Firefox";
+      setUiPhase("ready");
+    }
+  }
+};
+
+emojiToggle.addEventListener("change", checkOptionalFonts);
+cjkToggle.addEventListener("change", checkOptionalFonts);
+
 function collectOpts(): Opts {
   const next: Opts = {
     gpu: gpuToggle.checked,
@@ -325,15 +354,6 @@ async function start(): Promise<void> {
 
   const chosen = collectOpts();
   const optEnv = buildEnv(chosen);
-
-  if (chosen.emoji || chosen.cjk) {
-    setProgress({
-      phase: "decompressing",
-      percent: 1,
-      message: "Loading optional font assets",
-    });
-    await loadOptionalFonts(chosen.emoji, chosen.cjk);
-  }
 
   const fsProvider = await prepareChromeFs(assetsProgress);
 
