@@ -114,6 +114,9 @@ emojiToggle.checked = opts.emoji;
 cjkToggle.checked = opts.cjk;
 wispInput.value = opts.wisp;
 
+const chromeFsReady: Promise<FsProvider> = prepareChromeFs(assetsProgress);
+const wasmBlobReady: Promise<string> = fetchWasmBlob();
+
 // Optional Fonts downloading functionality when selected
 const checkOptionalFonts = async () => {
   if (emojiToggle.checked || cjkToggle.checked) {
@@ -127,6 +130,8 @@ const checkOptionalFonts = async () => {
       message: "Downloading optional font assets",
     });
     try {
+      // Must ensure FS is ready before downloading fonts to cache
+      await chromeFsReady;
       await loadOptionalFonts(emojiToggle.checked, cjkToggle.checked, assetsProgress);
       startBtn.disabled = false;
       startBtn.textContent = "Start Firefox";
@@ -330,9 +335,6 @@ async function fetchWasmBlob(): Promise<string> {
     new Blob(chunks as BlobPart[], { type: "application/wasm" }),
   );
 }
-
-const chromeFsReady: Promise<FsProvider> = prepareChromeFs(assetsProgress);
-const wasmBlobReady: Promise<string> = fetchWasmBlob();
 
 Promise.all([chromeFsReady, wasmBlobReady])
   .then(() => {
