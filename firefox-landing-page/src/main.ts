@@ -7,6 +7,9 @@ import {
 } from "./chrome-fs";
 import "./styles.css";
 
+declare const __GECKO_WASM__: { url: string; compressed: boolean };
+declare const __FILE_SIZES__: { emoji: number; cjk: number; assets: number; wasm: number };
+
 const canvas = document.getElementById("screen") as HTMLCanvasElement;
 const splashShell = document.getElementById("splash-shell") as HTMLElement;
 const splashCard = document.getElementById("stage-card") as HTMLElement;
@@ -35,9 +38,10 @@ let lastLogTime = 0;
 let lastLogPhase = "";
 
 function setProgress(progress: ChromeAssetsProgress, forceLog = false): void {
+  const hasPercent = progress.percent !== undefined;
   const pct = Math.min(100, Math.max(0, Math.round((progress.percent ?? 0) * 100)));
-  progressFill.style.width = `${pct}%`;
-  progressPercent.textContent = `${pct}%`;
+  progressFill.style.width = hasPercent ? `${pct}%` : "100%";
+  progressPercent.textContent = hasPercent ? `${pct}%` : "";
 
   const phaseLabels: Record<string, string> = {
     downloading: "Downloading assets",
@@ -147,6 +151,10 @@ const checkOptionalFonts = async () => {
 
 emojiToggle.addEventListener("change", checkOptionalFonts);
 cjkToggle.addEventListener("change", checkOptionalFonts);
+
+if (opts.emoji || opts.cjk) {
+  checkOptionalFonts();
+}
 
 function collectOpts(): Opts {
   const next: Opts = {
@@ -318,7 +326,7 @@ async function fetchWasmBlob(): Promise<string> {
   const r = await fetch(url);
   if (!r.ok || !r.body)
     throw new Error(`engine wasm fetch failed (${r.status}) for ${url}`);
-  dl.wasm.total = Number(r.headers.get("Content-Length")) || 0;
+  dl.wasm.total = Number(r.headers.get("Content-Length")) || __FILE_SIZES__.wasm || 0;
   const reader = r.body.getReader();
   const chunks: Uint8Array[] = [];
   for (;;) {

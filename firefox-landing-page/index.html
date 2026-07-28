@@ -6,6 +6,10 @@
     <title>Firefox WebAssembly</title>
   </head>
   <body>
+    <button id="theme-toggle" aria-label="Toggle theme">
+      <span class="toggle-icon">🌓</span>
+      <span class="toggle-label">Theme</span>
+    </button>
     <section id="splash" aria-live="polite">
       <main class="stage">
         <div class="stage-content">
@@ -128,24 +132,35 @@
             </div>
           </div>
         </div>
-      </div>
+      </main>
+    </section>
 
-      <div id="how-it-works-modal" class="modal" hidden>
-        <div class="modal-content">
-          <span id="close-modal" class="close">&times;</span>
-          <div class="how-it-works-section">
-            <h2 class="how-it-works-title">How it Works</h2>
-            <pre class="mermaid">
-sequenceDiagram
-    box Client Side (Browser Process)
-    participant B as Browser Tab
-    participant G as Gecko (WASM)
-    participant WC as Wisp Client
+    <div id="how-it-works-modal" class="modal" hidden>
+      <div class="modal-content">
+        <span id="close-modal" class="close">&times;</span>
+        <div class="how-it-works-section">
+          <h2 class="how-it-works-title">How it Works</h2>
+          <pre class="mermaid"></pre>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="screen" width="1024" height="768" tabindex="0"></canvas>
+    <script type="module" src="/src/main.ts"></script>
+    <script src="/mermaid.min.js"></script>
+    <script>
+      const mermaidCode = `sequenceDiagram
+
+    box rgba(128, 128, 30, 0.5) Client Side
+      participant B as Browser Tab
+      participant G as Gecko (WASM)
+      participant WC as Wisp Client
     end
-    box Server & Internet
-    participant W as Wisp Proxy Server
-    participant D as DNS Server
-    participant R as Target Web Server
+
+    box rgba(128, 30, 30, 0.5) Server & Internet
+      participant W as Wisp Proxy Server
+      participant D as DNS Server
+      participant R as Target Web Server
     end
 
     Note over B, G: UI Rendering
@@ -167,43 +182,82 @@ sequenceDiagram
     G->>R: 4. HTTP Request (Encrypted)
     R-->>G: HTTP Response (Encrypted)
 
-    G->>B: Canvas WebGL update (Render Page)
-            </pre>
-          </div>
-        </div>
-      </main>
-    </section>
-    <canvas id="screen" width="1024" height="768" tabindex="0"></canvas>
-    <script type="module" src="/src/main.ts"></script>
-    <script src="/mermaid.min.js"></script>
-    <script>
-      mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    G->>B: Canvas WebGL update (Render Page)`;
+
+      function getEffectiveTheme() {
+        const saved = localStorage.getItem('theme-preference');
+        if (saved === 'dark' || saved === 'light') return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function updateThemeUI(theme) {
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
+      let currentTheme = getEffectiveTheme();
+      updateThemeUI(currentTheme);
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme-preference')) {
+          currentTheme = e.matches ? 'dark' : 'light';
+          updateThemeUI(currentTheme);
+          renderMermaid();
+        }
+      });
+
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("how-it-works-modal");
         const link = document.getElementById("how-it-works-link");
         const span = document.getElementById("close-modal");
-        let mermaidRendered = false;
+        const themeBtn = document.getElementById("theme-toggle");
+        const mermaidContainer = document.querySelector(".mermaid");
 
-        link.onclick = function(e) {
-          e.preventDefault();
-          modal.hidden = false;
-          if (!mermaidRendered) {
-            mermaid.run({
-              querySelector: '.mermaid',
-            });
-            mermaidRendered = true;
-          }
+        function renderMermaid() {
+          if (!mermaidContainer || !window.mermaid) return;
+          const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'default';
+          window.mermaid.initialize({ startOnLoad: false, theme: theme, themeVariables: { darkMode: theme === 'dark' } });
+          mermaidContainer.removeAttribute('data-processed');
+          mermaidContainer.textContent = mermaidCode;
+          window.mermaid.run({ querySelector: '.mermaid' });
         }
 
-        span.onclick = function() {
-          modal.hidden = true;
+        if (themeBtn) {
+          themeBtn.onclick = function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const newTheme = isDark ? 'light' : 'dark';
+            localStorage.setItem('theme-preference', newTheme);
+            updateThemeUI(newTheme);
+            if (modal && !modal.hidden) {
+              renderMermaid();
+            }
+          };
+        }
+
+        if (link && modal) {
+          link.onclick = function(e) {
+            e.preventDefault();
+            modal.hidden = false;
+            renderMermaid();
+          };
+        }
+
+        if (span && modal) {
+          span.onclick = function() {
+            modal.hidden = true;
+          };
         }
 
         window.onclick = function(event) {
-          if (event.target == modal) {
+          if (modal && event.target == modal) {
             modal.hidden = true;
           }
-        }
+        };
       });
     </script>
   </body>

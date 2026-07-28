@@ -116,11 +116,21 @@ function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {
   return out;
 }
 
+declare const __FILE_SIZES__: { emoji: number; cjk: number; assets: number; wasm: number };
+
 async function fetchBytes(url: string, progress?: ProgressCallback): Promise<Uint8Array> {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`chrome-fs: ${url} -> HTTP ${r.status}`);
-  const totalStr = r.headers.get('Content-Length');
-  const total = totalStr ? Number(totalStr) : undefined;
+
+  let total: number | undefined;
+  if (url.includes('TwemojiMozilla.ttf')) total = __FILE_SIZES__.emoji;
+  else if (url.includes('NotoSansSC.ttf')) total = __FILE_SIZES__.cjk;
+  else if (url.includes('chrome-assets.tar.zst')) total = __FILE_SIZES__.assets;
+
+  if (!total) {
+    const totalStr = r.headers.get('Content-Length');
+    total = totalStr ? Number(totalStr) : undefined;
+  }
 
   if (!r.body) {
     const data = new Uint8Array(await r.arrayBuffer());
