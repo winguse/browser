@@ -162,11 +162,13 @@ sequenceDiagram
     </section>
     <canvas id="screen" width="1024" height="768" tabindex="0"></canvas>
     <script type="module" src="/src/main.ts"></script>
-    <script type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    <script src="/mermaid.min.js"></script>
+    <script>
       mermaid.initialize({ startOnLoad: false, theme: 'dark' });
-      await mermaid.run({
-        querySelector: '.mermaid',
+      document.addEventListener("DOMContentLoaded", function () {
+        mermaid.run({
+          querySelector: '.mermaid',
+        });
       });
     </script>
   </body>

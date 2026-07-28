@@ -3,6 +3,7 @@ CHROME_DEMO_URL := https://github.com/HeyPuter/firefox-wasm/releases/download/$(
 GECKO_JS_URL := https://github.com/HeyPuter/firefox-wasm/releases/download/$(FIREFOX_WASM_VERSION)/gecko.js-$(FIREFOX_WASM_VERSION).tar.gz
 TWEMOJI_URL := https://raw.githubusercontent.com/mozilla/gecko-dev/master/browser/fonts/TwemojiMozilla.ttf
 NOTO_CJK_URL := https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf
+MERMAID_URL := https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js
 
 DEPS_DIR := deps
 DIST_DIR := dist
@@ -37,6 +38,10 @@ download-deps:
 	@if [ ! -f "firefox-landing-page/public/fonts/NotoSansSC.ttf" ]; then \
 		echo ">> Downloading Noto Sans CJK Chinese font..."; \
 		curl -sL "$(NOTO_CJK_URL)" -o firefox-landing-page/public/fonts/NotoSansSC.ttf; \
+	fi
+	@if [ ! -f "firefox-landing-page/public/mermaid.min.js" ]; then \
+		echo ">> Downloading Mermaid JS..."; \
+		curl -sL "$(MERMAID_URL)" -o firefox-landing-page/public/mermaid.min.js; \
 	fi
 	@rm -rf /tmp/fw-deps
 
