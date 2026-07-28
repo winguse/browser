@@ -17,6 +17,7 @@ dist/
 /firefox-landing-page/node_modules/
 /firefox-landing-page/public/chrome-assets*
 /firefox-landing-page/public/fonts/
+/firefox-landing-page/public/mermaid.min.js
 *.ttf
 *.ttc
 *.woff2

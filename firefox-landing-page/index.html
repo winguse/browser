@@ -132,29 +132,37 @@
             <h2 class="how-it-works-title">How it Works</h2>
             <pre class="mermaid">
 sequenceDiagram
+    box Client Side (Browser Process)
     participant B as Browser Tab
     participant G as Gecko (WASM)
+    participant WC as Wisp Client
+    end
+    box Server & Internet
     participant W as Wisp Proxy Server
     participant D as DNS Server
     participant R as Target Web Server
+    end
 
-    Note over B, G: Page Render
+    Note over B, G: UI Rendering
     B->>G: User interaction (click, scroll)
     G->>B: Render updates to Canvas WebGL
 
-    Note over G, W: Network Traffic
-    G->>W: Sent via WebSocket (Wisp protocol)
+    Note over G, WC: Network Traffic
+    G->>WC: Virtual Network Socket Connection
 
-    W->>D: 1. DNS Query
+    WC->>W: Establish WebSocket (Wisp Protocol)
+
+    W->>D: 1. DNS Query (Requested by Client)
     D-->>W: IP Address
 
-    W->>R: 2. TCP Handshake
-    W->>R: 3. TLS Handshake
-    W->>R: 4. HTTP Request (Encrypted)
-    R-->>W: HTTP Response (Encrypted)
+    W->>R: 2. TCP Handshake (Proxy forwards bytes)
 
-    W-->>G: Forwarded via WebSocket
-    G->>B: Canvas WebGL update
+    Note over G, R: End-to-End Encryption
+    G->>R: 3. TLS Handshake (Wisp only sees encrypted bytes)
+    G->>R: 4. HTTP Request (Encrypted)
+    R-->>G: HTTP Response (Encrypted)
+
+    G->>B: Canvas WebGL update (Render Page)
             </pre>
           </div>
         </div>
