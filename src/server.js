@@ -26,7 +26,7 @@ function setCorsHeaders(res) {
   res.setHeader('cross-origin-embedder-policy', 'require-corp');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss:;"
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net data: blob: ws: wss:;"
   );
 }
 

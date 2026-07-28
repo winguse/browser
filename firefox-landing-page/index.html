@@ -8,127 +8,166 @@
   <body>
     <section id="splash" aria-live="polite">
       <main class="stage">
-        <div id="splash-shell" class="stage-inner" data-phase="loading">
-          <!-- Left Column: Branding, Overview & Startup Console -->
-          <div class="stage-col stage-col-info">
-            <div class="logo-lockup">
-              <span class="logo-tile wasm-tile">
-                <svg
-                  class="wasm-mark"
-                  viewBox="97.43 0 107.62 107.62"
-                  xmlns="http://www.w3.org/2000/svg"
-                  role="img"
-                  aria-label="WebAssembly"
-                >
-                  <rect x="97.43" y="0" width="107.62" height="107.62" fill="#fff" />
-                  <path
-                    fill="#0284c7"
-                    transform="translate(-0.21)"
-                    d="M163.76,0c0,.19,0,.38,0,.58a12.34,12.34,0,0,1-24.68,0c0-.2,0-.39,0-.58H97.64V107.62H205.26V0ZM149,96.1l-5.24-25.93h-.09L138,96.1h-7.22L122.6,58h7.13l4.88,25.93h.09L140.58,58h6.67l5.28,26.25h.09L158.19,58h7L156.1,96.1Zm39.26,0-2.43-8.48H173l-1.87,8.48H164L173.22,58h11.25l11.21,38.1Z"
-                  />
-                  <polygon
-                    fill="#0284c7"
-                    transform="translate(-0.21)"
-                    points="177.3 67.39 174.19 81.37 183.87 81.37 180.3 67.39 177.3 67.39"
-                  />
-                </svg>
-              </span>
-            </div>
-            <h1 id="project-title" class="splash-title">Firefox in WebAssembly</h1>
-            <p class="project-copy">
-              Gecko engine compiled to WebAssembly running directly inside your browser tab.
-            </p>
-
-            <section class="startup-console" aria-label="Startup console">
-              <p class="phase-kicker">Startup Log</p>
-              <div
-                id="console-output"
-                class="console-box"
-                role="log"
-                aria-label="Startup console output"
-              ></div>
-            </section>
-          </div>
-
-          <!-- Right Column: Launch Panel & Configuration Options -->
-          <div class="stage-col stage-col-controls">
-            <div id="stage-card" class="launch-panel" data-phase="loading">
-              <div class="panel-loading" aria-label="Loading Firefox">
-                <div
-                  class="progress-track"
-                  role="progressbar"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-valuenow="0"
-                >
-                  <div id="progress-fill" class="progress-fill"></div>
-                </div>
-                <div class="progress-meta">
-                  <span id="progress-phase">Preparing</span>
-                  <span id="progress-percent"></span>
-                </div>
-                <p id="splash-status" class="splash-status">Preparing Firefox…</p>
+        <div class="stage-content">
+          <div id="splash-shell" class="stage-inner" data-phase="loading">
+            <!-- Left Column: Branding, Overview & Startup Console -->
+            <div class="stage-col stage-col-info">
+              <div class="logo-lockup">
+                <span class="logo-tile wasm-tile">
+                  <svg
+                    class="wasm-mark"
+                    viewBox="97.43 0 107.62 107.62"
+                    xmlns="http://www.w3.org/2000/svg"
+                    role="img"
+                    aria-label="WebAssembly"
+                  >
+                    <rect x="97.43" y="0" width="107.62" height="107.62" fill="#fff" />
+                    <path
+                      fill="#0284c7"
+                      transform="translate(-0.21)"
+                      d="M163.76,0c0,.19,0,.38,0,.58a12.34,12.34,0,0,1-24.68,0c0-.2,0-.39,0-.58H97.64V107.62H205.26V0ZM149,96.1l-5.24-25.93h-.09L138,96.1h-7.22L122.6,58h7.13l4.88,25.93h.09L140.58,58h6.67l5.28,26.25h.09L158.19,58h7L156.1,96.1Zm39.26,0-2.43-8.48H173l-1.87,8.48H164L173.22,58h11.25l11.21,38.1Z"
+                    />
+                    <polygon
+                      fill="#0284c7"
+                      transform="translate(-0.21)"
+                      points="177.3 67.39 174.19 81.37 183.87 81.37 180.3 67.39 177.3 67.39"
+                    />
+                  </svg>
+                </span>
               </div>
+              <h1 id="project-title" class="splash-title">Firefox in WebAssembly</h1>
+              <p class="project-copy">
+                Gecko engine compiled to WebAssembly running directly inside your browser tab.
+              </p>
 
-              <div class="panel-ready" aria-label="Launch">
-                <button id="start-btn" type="button" class="start-btn">
-                  Launch Firefox
-                </button>
-                <p id="jspi-note" class="jspi-note" hidden></p>
-                <div class="options-section">
-                  <h3 class="options-title">Options</h3>
-                  <div class="splash-controls">
-                    <label class="option-card">
-                      <input type="checkbox" id="opt-gpu" checked />
-                      <span class="option-copy">
-                        <strong>GPU Acceleration</strong>
-                        <span>WebGL-based hardware rendering.</span>
-                      </span>
-                    </label>
+              <section class="startup-console" aria-label="Startup console">
+                <p class="phase-kicker">Startup Log</p>
+                <div
+                  id="console-output"
+                  class="console-box"
+                  role="log"
+                  aria-label="Startup console output"
+                ></div>
+              </section>
+            </div>
 
-                    <label class="option-card">
-                      <input type="checkbox" id="opt-jit" />
-                      <span class="option-copy">
-                        <strong>Enable JIT</strong>
-                        <span>Experimental JS → WASM JIT execution.</span>
-                      </span>
-                    </label>
+            <!-- Right Column: Launch Panel & Configuration Options -->
+            <div class="stage-col stage-col-controls">
+              <div id="stage-card" class="launch-panel" data-phase="loading">
+                <div class="panel-loading" aria-label="Loading Firefox">
+                  <div
+                    class="progress-track"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                  >
+                    <div id="progress-fill" class="progress-fill"></div>
+                  </div>
+                  <div class="progress-meta">
+                    <span id="progress-phase">Preparing</span>
+                    <span id="progress-percent"></span>
+                  </div>
+                  <p id="splash-status" class="splash-status">Preparing Firefox…</p>
+                </div>
 
-                    <label class="option-card">
-                      <input type="checkbox" id="opt-emoji" />
-                      <span class="option-copy">
-                        <strong>Load Emoji Font</strong>
-                        <span>Mozilla official vector emoji font for full color emojis.</span>
-                      </span>
-                    </label>
+                <div class="panel-ready" aria-label="Launch">
+                  <button id="start-btn" type="button" class="start-btn">
+                    Launch Firefox
+                  </button>
+                  <p id="jspi-note" class="jspi-note" hidden></p>
+                  <div class="options-section">
+                    <h3 class="options-title">Options</h3>
+                    <div class="splash-controls">
+                      <label class="option-card">
+                        <input type="checkbox" id="opt-gpu" checked />
+                        <span class="option-copy">
+                          <strong>GPU Acceleration</strong>
+                          <span>WebGL-based hardware rendering.</span>
+                        </span>
+                      </label>
 
-                    <label class="option-card">
-                      <input type="checkbox" id="opt-cjk" />
-                      <span class="option-copy">
-                        <strong>Load CJK Font</strong>
-                        <span>Noto Sans CJK font for Chinese character rendering.</span>
-                      </span>
-                    </label>
+                      <label class="option-card">
+                        <input type="checkbox" id="opt-jit" />
+                        <span class="option-copy">
+                          <strong>Enable JIT</strong>
+                          <span>Experimental JS → WASM JIT execution.</span>
+                        </span>
+                      </label>
 
-                    <label class="wisp-field">
-                      <span>Wisp Server</span>
-                      <input
-                        type="text"
-                        id="opt-wisp"
-                        spellcheck="false"
-                        autocomplete="off"
-                        aria-label="Wisp server"
-                      />
-                    </label>
+                      <label class="option-card">
+                        <input type="checkbox" id="opt-emoji" />
+                        <span class="option-copy">
+                          <strong>Load Emoji Font</strong>
+                          <span>Mozilla official vector emoji font for full color emojis.</span>
+                        </span>
+                      </label>
+
+                      <label class="option-card">
+                        <input type="checkbox" id="opt-cjk" />
+                        <span class="option-copy">
+                          <strong>Load CJK Font</strong>
+                          <span>Noto Sans CJK font for Chinese character rendering.</span>
+                        </span>
+                      </label>
+
+                      <label class="wisp-field">
+                        <span>Wisp Server</span>
+                        <input
+                          type="text"
+                          id="opt-wisp"
+                          spellcheck="false"
+                          autocomplete="off"
+                          aria-label="Wisp server"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="how-it-works-section">
+            <h2 class="how-it-works-title">How it Works</h2>
+            <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser Tab
+    participant G as Gecko (WASM)
+    participant W as Wisp Proxy Server
+    participant D as DNS Server
+    participant R as Target Web Server
+
+    Note over B, G: Page Render
+    B->>G: User interaction (click, scroll)
+    G->>B: Render updates to Canvas WebGL
+
+    Note over G, W: Network Traffic
+    G->>W: Sent via WebSocket (Wisp protocol)
+
+    W->>D: 1. DNS Query
+    D-->>W: IP Address
+
+    W->>R: 2. TCP Handshake
+    W->>R: 3. TLS Handshake
+    W->>R: 4. HTTP Request (Encrypted)
+    R-->>W: HTTP Response (Encrypted)
+
+    W-->>G: Forwarded via WebSocket
+    G->>B: Canvas WebGL update
+            </pre>
           </div>
         </div>
       </main>
     </section>
     <canvas id="screen" width="1024" height="768" tabindex="0"></canvas>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+      await mermaid.run({
+        querySelector: '.mermaid',
+      });
+    </script>
   </body>
 </html>

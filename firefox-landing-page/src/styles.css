@@ -307,3 +307,29 @@ body, html {
 #screen.ready {
   opacity: 1;
 }
+
+.how-it-works-section {
+  width: 100%;
+  margin-top: 3rem;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 16px 24px -4px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.how-it-works-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 1.5rem;
+}
+
+.stage-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 920px;
+}
