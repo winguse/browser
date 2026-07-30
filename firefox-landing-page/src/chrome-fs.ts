@@ -116,10 +116,22 @@ function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {
   return out;
 }
 
+declare const __FILE_SIZES__: { emoji: number; cjk: number; assets: number; wasm: number };
+
 async function fetchBytes(url: string, progress?: ProgressCallback): Promise<Uint8Array> {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`chrome-fs: ${url} -> HTTP ${r.status}`);
-  const total = Number(r.headers.get('Content-Length')) || undefined;
+
+  let total: number | undefined;
+  if (url.includes('TwemojiMozilla.ttf')) total = __FILE_SIZES__.emoji;
+  else if (url.includes('NotoSansSC.ttf')) total = __FILE_SIZES__.cjk;
+  else if (url.includes('chrome-assets.tar.zst')) total = __FILE_SIZES__.assets;
+
+  if (!total) {
+    const totalStr = r.headers.get('Content-Length');
+    total = totalStr ? Number(totalStr) : undefined;
+  }
+
   if (!r.body) {
     const data = new Uint8Array(await r.arrayBuffer());
     report(progress, {
@@ -127,7 +139,7 @@ async function fetchBytes(url: string, progress?: ProgressCallback): Promise<Uin
       loaded: data.byteLength,
       total: data.byteLength,
       percent: 1,
-      message: 'Downloaded chrome assets',
+      message: 'Downloaded assets',
     });
     return data;
   }
@@ -145,7 +157,7 @@ async function fetchBytes(url: string, progress?: ProgressCallback): Promise<Uin
       loaded,
       total,
       percent: total ? loaded / total : undefined,
-      message: total ? `Downloading chrome assets (${Math.round((loaded / total) * 100)}%)` : 'Downloading chrome assets',
+      message: total ? `Downloading (${Math.round((loaded / total) * 100)}%)` : 'Downloading',
     });
   }
   return concatChunks(chunks, loaded);
@@ -288,22 +300,19 @@ function makeProvider(index: TarIndex): FsProvider {
 /**
  * Load optional fonts on demand if requested by user
  */
-export async function loadOptionalFonts(loadEmoji: boolean, loadCjk: boolean): Promise<void> {
+export async function loadOptionalFonts(loadEmoji: boolean, loadCjk: boolean, progress?: ProgressCallback): Promise<void> {
   if (!cachedTarIndex) return;
 
   if (loadEmoji && !cachedTarIndex.files.has('fonts/TwemojiMozilla.ttf')) {
     try {
       console.log('[chrome-fs] User enabled Emoji font: fetching TwemojiMozilla.ttf...');
       const emojiUrl = new URL('fonts/TwemojiMozilla.ttf', location.href).href;
-      const emojiRes = await fetch(emojiUrl);
-      if (emojiRes.ok) {
-        const emojiBytes = new Uint8Array(await emojiRes.arrayBuffer());
-        cachedTarIndex.files.set('fonts/TwemojiMozilla.ttf', emojiBytes);
-        cachedTarIndex.files.set('browser/fonts/TwemojiMozilla.ttf', emojiBytes.slice());
-        addToTree(cachedTarIndex.dirs, ['fonts', 'TwemojiMozilla.ttf'], false);
-        addToTree(cachedTarIndex.dirs, ['browser', 'fonts', 'TwemojiMozilla.ttf'], false);
-        console.log(`[chrome-fs] Loaded TwemojiMozilla.ttf (${Math.round(emojiBytes.byteLength / 1024)} KB)`);
-      }
+      const emojiBytes = await fetchBytes(emojiUrl, progress);
+      cachedTarIndex.files.set('fonts/TwemojiMozilla.ttf', emojiBytes);
+      cachedTarIndex.files.set('browser/fonts/TwemojiMozilla.ttf', emojiBytes.slice());
+      addToTree(cachedTarIndex.dirs, ['fonts', 'TwemojiMozilla.ttf'], false);
+      addToTree(cachedTarIndex.dirs, ['browser', 'fonts', 'TwemojiMozilla.ttf'], false);
+      console.log(`[chrome-fs] Loaded TwemojiMozilla.ttf (${Math.round(emojiBytes.byteLength / 1024)} KB)`);
     } catch (e) {
       console.warn('[chrome-fs] Could not load TwemojiMozilla.ttf:', e);
     }
@@ -313,15 +322,12 @@ export async function loadOptionalFonts(loadEmoji: boolean, loadCjk: boolean): P
     try {
       console.log('[chrome-fs] User enabled CJK font: fetching NotoSansSC.ttf...');
       const notoUrl = new URL('fonts/NotoSansSC.ttf', location.href).href;
-      const notoRes = await fetch(notoUrl);
-      if (notoRes.ok) {
-        const notoBytes = new Uint8Array(await notoRes.arrayBuffer());
-        cachedTarIndex.files.set('fonts/NotoSansSC.ttf', notoBytes);
-        cachedTarIndex.files.set('browser/fonts/NotoSansSC.ttf', notoBytes.slice());
-        addToTree(cachedTarIndex.dirs, ['fonts', 'NotoSansSC.ttf'], false);
-        addToTree(cachedTarIndex.dirs, ['browser', 'fonts', 'NotoSansSC.ttf'], false);
-        console.log(`[chrome-fs] Loaded NotoSansSC.ttf (${Math.round(notoBytes.byteLength / 1024)} KB)`);
-      }
+      const notoBytes = await fetchBytes(notoUrl, progress);
+      cachedTarIndex.files.set('fonts/NotoSansSC.ttf', notoBytes);
+      cachedTarIndex.files.set('browser/fonts/NotoSansSC.ttf', notoBytes.slice());
+      addToTree(cachedTarIndex.dirs, ['fonts', 'NotoSansSC.ttf'], false);
+      addToTree(cachedTarIndex.dirs, ['browser', 'fonts', 'NotoSansSC.ttf'], false);
+      console.log(`[chrome-fs] Loaded NotoSansSC.ttf (${Math.round(notoBytes.byteLength / 1024)} KB)`);
     } catch (e) {
       console.warn('[chrome-fs] Could not load NotoSansSC.ttf:', e);
     }

@@ -89,10 +89,20 @@ const coop = {
 const wasmCompressed = fs.existsSync(path.join(libDist, 'gecko.wasm.zst'));
 const GECKO_WASM = { url: wasmCompressed ? 'gecko.wasm.zst' : 'gecko.wasm', compressed: wasmCompressed };
 
+const sizes = {
+  emoji: fs.existsSync(path.join(PUBLIC_DIR, 'fonts/TwemojiMozilla.ttf')) ? fs.statSync(path.join(PUBLIC_DIR, 'fonts/TwemojiMozilla.ttf')).size : 0,
+  cjk: fs.existsSync(path.join(PUBLIC_DIR, 'fonts/NotoSansSC.ttf')) ? fs.statSync(path.join(PUBLIC_DIR, 'fonts/NotoSansSC.ttf')).size : 0,
+  assets: fs.existsSync(ASSET_ARCHIVE) ? fs.statSync(ASSET_ARCHIVE).size : 0,
+  wasm: fs.existsSync(path.join(libDist, GECKO_WASM.url)) ? fs.statSync(path.join(libDist, GECKO_WASM.url)).size : 0,
+};
+
 export default defineConfig({
   base: './',
   plugins: [serveEngine(), packageGreExtra(), wispProxy()],
-  define: { __GECKO_WASM__: JSON.stringify(GECKO_WASM) },
+  define: {
+    __GECKO_WASM__: JSON.stringify(GECKO_WASM),
+    __FILE_SIZES__: JSON.stringify(sizes),
+  },
   optimizeDeps: { exclude: ['gecko.js'] },
   build: { target: 'esnext' },
   server: { headers: coop },

@@ -7,6 +7,9 @@ import {
 } from "./chrome-fs";
 import "./styles.css";
 
+declare const __GECKO_WASM__: { url: string; compressed: boolean };
+declare const __FILE_SIZES__: { emoji: number; cjk: number; assets: number; wasm: number };
+
 const canvas = document.getElementById("screen") as HTMLCanvasElement;
 const splashShell = document.getElementById("splash-shell") as HTMLElement;
 const splashCard = document.getElementById("stage-card") as HTMLElement;
@@ -35,9 +38,10 @@ let lastLogTime = 0;
 let lastLogPhase = "";
 
 function setProgress(progress: ChromeAssetsProgress, forceLog = false): void {
+  const hasPercent = progress.percent !== undefined;
   const pct = Math.min(100, Math.max(0, Math.round((progress.percent ?? 0) * 100)));
-  progressFill.style.width = `${pct}%`;
-  progressPercent.textContent = `${pct}%`;
+  progressFill.style.width = hasPercent ? `${pct}%` : "100%";
+  progressPercent.textContent = hasPercent ? `${pct}%` : "";
 
   const phaseLabels: Record<string, string> = {
     downloading: "Downloading assets",
@@ -113,6 +117,44 @@ jitToggle.checked = opts.jit;
 emojiToggle.checked = opts.emoji;
 cjkToggle.checked = opts.cjk;
 wispInput.value = opts.wisp;
+
+const chromeFsReady: Promise<FsProvider> = prepareChromeFs(assetsProgress);
+const wasmBlobReady: Promise<string> = fetchWasmBlob();
+
+// Optional Fonts downloading functionality when selected
+const checkOptionalFonts = async () => {
+  if (emojiToggle.checked || cjkToggle.checked) {
+    startBtn.disabled = true;
+    startBtn.textContent = "Downloading Fonts…";
+    setUiPhase("loading");
+    setProgress({
+      phase: "downloading",
+      loaded: 0,
+      total: 0,
+      message: "Downloading optional font assets",
+    });
+    try {
+      // Must ensure FS is ready before downloading fonts to cache
+      await chromeFsReady;
+      await loadOptionalFonts(emojiToggle.checked, cjkToggle.checked, assetsProgress);
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Firefox";
+      setUiPhase("ready");
+    } catch (e) {
+      console.warn("Failed to load optional fonts:", e);
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Firefox";
+      setUiPhase("ready");
+    }
+  }
+};
+
+emojiToggle.addEventListener("change", checkOptionalFonts);
+cjkToggle.addEventListener("change", checkOptionalFonts);
+
+if (opts.emoji || opts.cjk) {
+  checkOptionalFonts();
+}
 
 function collectOpts(): Opts {
   const next: Opts = {
@@ -284,7 +326,7 @@ async function fetchWasmBlob(): Promise<string> {
   const r = await fetch(url);
   if (!r.ok || !r.body)
     throw new Error(`engine wasm fetch failed (${r.status}) for ${url}`);
-  dl.wasm.total = Number(r.headers.get("Content-Length")) || 0;
+  dl.wasm.total = Number(r.headers.get("Content-Length")) || __FILE_SIZES__.wasm || 0;
   const reader = r.body.getReader();
   const chunks: Uint8Array[] = [];
   for (;;) {
@@ -301,9 +343,6 @@ async function fetchWasmBlob(): Promise<string> {
     new Blob(chunks as BlobPart[], { type: "application/wasm" }),
   );
 }
-
-const chromeFsReady: Promise<FsProvider> = prepareChromeFs(assetsProgress);
-const wasmBlobReady: Promise<string> = fetchWasmBlob();
 
 Promise.all([chromeFsReady, wasmBlobReady])
   .then(() => {
@@ -325,15 +364,6 @@ async function start(): Promise<void> {
 
   const chosen = collectOpts();
   const optEnv = buildEnv(chosen);
-
-  if (chosen.emoji || chosen.cjk) {
-    setProgress({
-      phase: "decompressing",
-      percent: 1,
-      message: "Loading optional font assets",
-    });
-    await loadOptionalFonts(chosen.emoji, chosen.cjk);
-  }
 
   const fsProvider = await prepareChromeFs(assetsProgress);
 

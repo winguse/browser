@@ -1,5 +1,54 @@
+/* ── Theme Tokens ──────────────────────────────────────────────────────────── */
 :root {
+  /* Light mode defaults */
+  --bg-color: #f0f4f8;
+  --bg-gradient-a: #e8f0fb;
+  --bg-gradient-b: #f0f4f8;
+  --panel-bg: rgba(255, 255, 255, 0.82);
+  --panel-border: rgba(0, 0, 0, 0.09);
+  --text-main: #0f172a;
+  --text-muted: #4b5e7a;
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --accent: #0284c7;
+  --console-bg: #1e2433;
+  --console-text: #38bdf8;
+  --option-card-bg: rgba(0, 0, 0, 0.03);
+  --option-card-border: rgba(0, 0, 0, 0.06);
+  --option-card-hover: rgba(0, 0, 0, 0.06);
+  --wisp-input-bg: rgba(0, 0, 0, 0.04);
+  --progress-track-bg: rgba(0, 0, 0, 0.1);
+  --shadow-panel: 0 8px 32px -4px rgba(0, 0, 0, 0.12);
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --bg-color: #070a12;
+    --bg-gradient-a: #0f172a;
+    --bg-gradient-b: #070a12;
+    --panel-bg: rgba(15, 23, 42, 0.85);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #0284c7;
+    --primary-hover: #0369a1;
+    --accent: #0ea5e9;
+    --console-bg: #030712;
+    --console-text: #38bdf8;
+    --option-card-bg: rgba(255, 255, 255, 0.025);
+    --option-card-border: rgba(255, 255, 255, 0.05);
+    --option-card-hover: rgba(255, 255, 255, 0.05);
+    --wisp-input-bg: rgba(7, 10, 18, 0.8);
+    --progress-track-bg: rgba(255, 255, 255, 0.1);
+    --shadow-panel: 0 16px 40px -4px rgba(0, 0, 0, 0.6);
+  }
+}
+
+html.dark {
   --bg-color: #070a12;
+  --bg-gradient-a: #0f172a;
+  --bg-gradient-b: #070a12;
   --panel-bg: rgba(15, 23, 42, 0.85);
   --panel-border: rgba(255, 255, 255, 0.08);
   --text-main: #f8fafc;
@@ -7,9 +56,38 @@
   --primary: #0284c7;
   --primary-hover: #0369a1;
   --accent: #0ea5e9;
-  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --console-bg: #030712;
+  --console-text: #38bdf8;
+  --option-card-bg: rgba(255, 255, 255, 0.025);
+  --option-card-border: rgba(255, 255, 255, 0.05);
+  --option-card-hover: rgba(255, 255, 255, 0.05);
+  --wisp-input-bg: rgba(7, 10, 18, 0.8);
+  --progress-track-bg: rgba(255, 255, 255, 0.1);
+  --shadow-panel: 0 16px 40px -4px rgba(0, 0, 0, 0.6);
 }
 
+html.light {
+  --bg-color: #f0f4f8;
+  --bg-gradient-a: #e8f0fb;
+  --bg-gradient-b: #f0f4f8;
+  --panel-bg: rgba(255, 255, 255, 0.82);
+  --panel-border: rgba(0, 0, 0, 0.09);
+  --text-main: #0f172a;
+  --text-muted: #4b5e7a;
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --accent: #0284c7;
+  --console-bg: #1e2433;
+  --console-text: #38bdf8;
+  --option-card-bg: rgba(0, 0, 0, 0.03);
+  --option-card-border: rgba(0, 0, 0, 0.06);
+  --option-card-hover: rgba(0, 0, 0, 0.06);
+  --wisp-input-bg: rgba(0, 0, 0, 0.04);
+  --progress-track-bg: rgba(0, 0, 0, 0.1);
+  --shadow-panel: 0 8px 32px -4px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -23,16 +101,18 @@ body, html {
   background-color: var(--bg-color);
   font-family: var(--font-family);
   color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ── Splash ────────────────────────────────────────────────────────────────── */
 #splash {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   z-index: 10;
-  background: radial-gradient(circle at 50% 20%, #0f172a 0%, #070a12 80%);
-  transition: opacity 0.4s ease, visibility 0.4s ease;
+  background: radial-gradient(circle at 50% 20%, var(--bg-gradient-a) 0%, var(--bg-gradient-b) 80%);
+  transition: opacity 0.4s ease, visibility 0.4s ease, background 0.3s ease;
 }
 
 #splash.done {
@@ -41,6 +121,7 @@ body, html {
   pointer-events: none;
 }
 
+/* ── Stage ─────────────────────────────────────────────────────────────────── */
 .stage {
   flex: 1;
   display: flex;
@@ -50,7 +131,6 @@ body, html {
   overflow-y: auto;
 }
 
-/* Compact 2-column layout */
 .stage-inner {
   max-width: 920px;
   width: 100%;
@@ -74,6 +154,7 @@ body, html {
   text-align: left;
 }
 
+/* ── Logo ──────────────────────────────────────────────────────────────────── */
 .logo-lockup {
   display: flex;
   align-items: center;
@@ -90,7 +171,7 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.2);
 }
 
 .wasm-mark {
@@ -98,11 +179,13 @@ body, html {
   height: 36px;
 }
 
+/* ── Typography ────────────────────────────────────────────────────────────── */
 .splash-title {
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  color: var(--text-main);
 }
 
 .project-copy {
@@ -111,6 +194,7 @@ body, html {
   line-height: 1.45;
 }
 
+/* ── Launch Panel ──────────────────────────────────────────────────────────── */
 .launch-panel {
   width: 100%;
   background: var(--panel-bg);
@@ -118,7 +202,8 @@ body, html {
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 1.25rem;
-  box-shadow: 0 16px 24px -4px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-panel);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .launch-panel[data-phase="loading"] .panel-ready {
@@ -129,10 +214,11 @@ body, html {
   display: none;
 }
 
+/* ── Progress ──────────────────────────────────────────────────────────────── */
 .progress-track {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--progress-track-bg);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 0.75rem;
@@ -158,6 +244,7 @@ body, html {
   color: var(--text-muted);
 }
 
+/* ── Start Button ──────────────────────────────────────────────────────────── */
 .start-btn {
   width: 100%;
   padding: 0.75rem 1.25rem;
@@ -182,6 +269,7 @@ body, html {
   cursor: not-allowed;
 }
 
+/* ── Options ───────────────────────────────────────────────────────────────── */
 .options-section {
   margin-top: 1.1rem;
 }
@@ -204,15 +292,15 @@ body, html {
   align-items: flex-start;
   gap: 0.65rem;
   padding: 0.5rem 0.65rem;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--option-card-bg);
+  border: 1px solid var(--option-card-border);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .option-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--option-card-hover);
 }
 
 .option-card input[type="checkbox"] {
@@ -240,6 +328,7 @@ body, html {
   line-height: 1.3;
 }
 
+/* ── Wisp Field ────────────────────────────────────────────────────────────── */
 .wisp-field {
   display: flex;
   flex-direction: column;
@@ -255,14 +344,16 @@ body, html {
 
 .wisp-field input {
   padding: 0.5rem 0.7rem;
-  background: rgba(7, 10, 18, 0.8);
+  background: var(--wisp-input-bg);
   border: 1px solid var(--panel-border);
   border-radius: 6px;
-  color: #fff;
+  color: var(--text-main);
   font-family: monospace;
   font-size: 0.8rem;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
+/* ── Console ───────────────────────────────────────────────────────────────── */
 .startup-console {
   width: 100%;
   margin-top: 0.5rem;
@@ -277,7 +368,7 @@ body, html {
 }
 
 .console-box {
-  background: #030712;
+  background: var(--console-bg);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 0.65rem;
@@ -285,15 +376,17 @@ body, html {
   overflow-y: auto;
   font-family: monospace;
   font-size: 0.75rem;
-  color: #38bdf8;
+  color: var(--console-text);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  transition: background 0.3s ease;
 }
 
 .console-line.error { color: #f87171; }
-.console-line.warn { color: #fbbf24; }
+.console-line.warn  { color: #fbbf24; }
 
+/* ── Canvas / Screen ───────────────────────────────────────────────────────── */
 #screen {
   position: absolute;
   inset: 0;
@@ -306,4 +399,139 @@ body, html {
 
 #screen.ready {
   opacity: 1;
+}
+
+/* ── Dark-Mode Toggle Button ───────────────────────────────────────────────── */
+#theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font-family);
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-panel);
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+#theme-toggle:hover {
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+#theme-toggle .toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.4s ease;
+}
+
+/* ── Modal ─────────────────────────────────────────────────────────────────── */
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal[hidden] {
+  display: none !important;
+}
+
+.modal-content {
+  position: relative;
+  width: 95vw;
+  height: 95vh;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  padding: 40px;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-panel);
+  transition: background 0.3s ease;
+}
+
+.modal-content .mermaid {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure mermaid diagram SVG backgrounds adapt to theme */
+.modal-content .mermaid svg {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+/* Light mode: mermaid diagrams need a light background */
+html.light .modal-content .mermaid svg,
+html:not(.dark) .modal-content .mermaid svg {
+  background: transparent;
+}
+
+.close {
+  color: var(--text-muted);
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1001;
+  transition: color 0.2s ease;
+}
+
+.close:hover,
+.close:focus {
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+/* ── How It Works section ──────────────────────────────────────────────────── */
+.how-it-works-section {
+  width: 100%;
+  height: 100%;
+  background: var(--panel-bg);
+  border-radius: 14px;
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.how-it-works-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 1.5rem;
+}
+
+.stage-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 920px;
 }
